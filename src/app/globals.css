@@ -1,42 +1,44 @@
+/* src/app/globals.css */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-html,
-body {
-  max-width: 100vw;
-  overflow-x: hidden;
+  /* Tu variable de color Naranja Corporativo */
+  --color-corporate: #eb690b; 
+  --color-bg-light: #f4f6f9;
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--color-bg-light);
 }
 
-* {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
+/* --- CLASES PERSONALIZADAS --- */
+
+/* Botón Corporativo (Reemplaza al btn-primary de Bootstrap) */
+.btn-corporate {
+  background-color: var(--color-corporate) !important;
+  border-color: var(--color-corporate) !important;
+  color: white !important;
+  font-weight: bold !important;
+  transition: all 0.3s ease;
 }
 
-a {
-  color: inherit;
-  text-decoration: none;
+.btn-corporate:hover {
+  background-color: #d15800 !important; /* Un poco más oscuro al pasar el mouse */
+  border-color: #d15800 !important;
 }
 
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
-  }
+/* Texto Corporativo */
+.text-corporate {
+  color: var(--color-corporate) !important;
+}
+
+/* Fondos */
+.bg-corporate-light {
+  background-color: var(--color-bg-light);
+}
+
+/* Tarjetas limpias */
+.card-clean {
+  border-radius: 15px;
+  border: none;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08); /* Sombra suave y moderna */
 }
