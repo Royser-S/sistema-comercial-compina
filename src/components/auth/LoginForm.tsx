@@ -14,23 +14,34 @@ export default function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
+    setError(null); // Limpiamos errores previos
     setLoading(true);
 
     try {
-      // Llamamos a la capa de SERVICIO
       const { rol } = await loginUser(email, password);
 
-      // Decisión de navegación
-      if (rol === 'sistemas') {
-        router.push('/admin');
-      } else {
-        router.push('/proyectos');
+      if (!rol) {
+        throw new Error('No_Rol'); // Error interno nuestro
       }
+
+      router.push('/proyectos'); 
+
     } catch (err: any) {
-      setError(err.message || 'Error al iniciar sesión');
+      console.log("Error de login:", err.message); // Solo para ti en consola (F12)
+
+      // AQUI ESTÁ LA MAGIA: Traducimos el error feo de Supabase
+      if (err.message.includes('Invalid login credentials')) {
+        setError('❌ Correo o contraseña incorrectos.');
+      } else if (err.message === 'No_Rol') {
+        setError('⚠️ Tu usuario no tiene permisos asignados. Contacta al administrador.');
+      } else if (err.message.includes('Email not confirmed')) {
+        setError('📧 Debes confirmar tu correo electrónico antes de entrar.');
+      } else {
+        // Error genérico para cualquier otra cosa rara
+        setError('Ocurrió un error inesperado. Inténtalo más tarde.');
+      }
     } finally {
       setLoading(false);
     }

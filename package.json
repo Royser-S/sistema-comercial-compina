@@ -11,10 +11,12 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.89.0",
     "bootstrap": "^5.3.8",
+    "browser-image-compression": "^2.0.2",
     "next": "16.1.0",
     "react": "19.2.3",
     "react-bootstrap": "^2.10.10",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.3",
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
     "@types/node": "^20",
