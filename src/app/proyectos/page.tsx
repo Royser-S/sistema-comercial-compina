@@ -128,8 +128,8 @@ export default function ProyectosPage() {
   };
 
   return (
-    <div className="bg-light min-vh-100">
-      <TopNavbar />
+<div className="min-vh-100">      
+  <TopNavbar />
 
       <Container fluid className="pb-5">
         <div className="d-flex justify-content-between align-items-center mb-3">

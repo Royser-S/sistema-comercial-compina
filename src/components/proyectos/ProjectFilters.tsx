@@ -14,7 +14,7 @@ interface Props {
 export default function ProjectFilters({ filtros, onChange, onClean, listaEjecutivas, listaUbicaciones }: Props) {
   return (
     <Card className="mb-4 shadow-sm border-0">
-      <Card.Body className="bg-white rounded">
+      <Card.Body className="rounded">
         <h6 className="fw-bold text-secondary mb-3">🔍 Búsqueda Avanzada</h6>
         <Form>
           <Row className="g-3">
@@ -23,7 +23,7 @@ export default function ProjectFilters({ filtros, onChange, onClean, listaEjecut
               <Form.Select 
                 value={filtros.ejecutiva} 
                 onChange={e => onChange('ejecutiva', e.target.value)}
-                className="bg-light border-0"
+                className=" border-0"
               >
                 <option value="">Todas las Ejecutivas</option>
                 {listaEjecutivas.map(e => <option key={e.id} value={e.id}>{e.nombre_completo}</option>)}
@@ -33,7 +33,7 @@ export default function ProjectFilters({ filtros, onChange, onClean, listaEjecut
               <Form.Select 
                 value={filtros.ubicacion} 
                 onChange={e => onChange('ubicacion', e.target.value)}
-                className="bg-light border-0"
+                className=" border-0"
               >
                 <option value="">Todas las Ubicaciones</option>
                 {listaUbicaciones.map(u => <option key={u.id} value={u.id}>{u.nombre}</option>)}
@@ -43,7 +43,7 @@ export default function ProjectFilters({ filtros, onChange, onClean, listaEjecut
               <Form.Select 
                 value={filtros.tipo} 
                 onChange={e => onChange('tipo', e.target.value)}
-                className="bg-light border-0"
+                className="border-0"
               >
                 <option value="">Todos los Tipos</option>
                 <option value="kit">Solo Kits</option>
@@ -55,7 +55,7 @@ export default function ProjectFilters({ filtros, onChange, onClean, listaEjecut
                 type="month" // <--- AQUÍ ESTÁ EL CAMBIO (Antes era "date")
                 value={filtros.fecha}
                 onChange={e => onChange('fecha', e.target.value)}
-                className="bg-light border-0"
+                className=" border-0"
                 lang="es" // Ayuda a que el navegador lo muestre en español
               />
             </Col>

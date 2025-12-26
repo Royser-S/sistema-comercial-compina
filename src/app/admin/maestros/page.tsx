@@ -107,27 +107,26 @@ export default function MaestrosPage() {
   };
 
   // Estilo de fila (si está inactivo se pone gris)
-  const getRowStyle = (activo: boolean) => activo ? {} : { backgroundColor: '#f8f9fa', color: '#adb5bd' };
-
+const getRowStyle = (activo: boolean) => activo ? {} : { opacity: 0.5, filter: 'grayscale(100%)' };
   return (
-    <div className="bg-light min-vh-100">
-      <TopNavbar />
+<div className="min-vh-100">      
+    <TopNavbar />
       
       <Container className="py-5">
         <Row className="mb-4 text-center">
             <Col>
-                <h1 className="fw-bold text-dark display-5">🗂️ Gestión de Listas</h1>
+                <h1 className="fw-bold display-5">🗂️ Gestión de Listas</h1>
                 <p className="text-muted fs-5">Administra y restaura las opciones del sistema</p>
             </Col>
         </Row>
 
         <Card className="shadow-lg border-0 rounded-4 overflow-hidden">
-          <Card.Header className="bg-white p-4 border-bottom-0">
+          <Card.Header className=" p-4 border-bottom-0">
              <Tab.Container defaultActiveKey="ejecutivas">
-                <Nav variant="pills" className="nav-justified gap-3 p-2 bg-light rounded-pill">
-                  <Nav.Item><Nav.Link eventKey="ejecutivas" className="fs-5 fw-bold py-3 text-dark">👩‍💼 Ejecutivas</Nav.Link></Nav.Item>
-                  <Nav.Item><Nav.Link eventKey="ubicaciones" className="fs-5 fw-bold py-3 text-dark">📍 Ubicaciones</Nav.Link></Nav.Item>
-                  <Nav.Item><Nav.Link eventKey="estados" className="fs-5 fw-bold py-3 text-dark">🚦 Estados</Nav.Link></Nav.Item>
+                <Nav variant="pills" className="nav-justified gap-3 p-2  rounded-pill">
+                  <Nav.Item><Nav.Link eventKey="ejecutivas" className="fs-5 fw-bold py-3">👩‍💼 Ejecutivas</Nav.Link></Nav.Item>
+                  <Nav.Item><Nav.Link eventKey="ubicaciones" className="fs-5 fw-bold py-3">📍 Ubicaciones</Nav.Link></Nav.Item>
+                  <Nav.Item><Nav.Link eventKey="estados" className="fs-5 fw-bold py-3">🚦 Estados</Nav.Link></Nav.Item>
                 </Nav>
 
                 <Card.Body className="p-5">
@@ -140,7 +139,7 @@ export default function MaestrosPage() {
                         <Button className="btn-corporate btn-lg px-4 shadow-sm" onClick={() => abrirModal('EJECUTIVA')}>+ Agregar</Button>
                       </div>
                       <Table hover responsive className="align-middle">
-                        <thead className="bg-light"><tr><th className="py-3 ps-4">Nombre</th><th className="text-end pe-4">Acción</th></tr></thead>
+                        <thead className=""><tr><th className="py-3 ps-4">Nombre</th><th className="text-end pe-4">Acción</th></tr></thead>
                         <tbody>
                           {ejecutivas.map(e => (
                             <tr key={e.id} style={getRowStyle(e.activo)}>
@@ -161,7 +160,7 @@ export default function MaestrosPage() {
                         <Button className="btn-corporate btn-lg px-4 shadow-sm" onClick={() => abrirModal('UBICACION')}>+ Agregar</Button>
                       </div>
                       <Table hover responsive className="align-middle">
-                        <thead className="bg-light"><tr><th className="py-3 ps-4">Nombre</th><th className="text-end pe-4">Acción</th></tr></thead>
+                        <thead className=""><tr><th className="py-3 ps-4">Nombre</th><th className="text-end pe-4">Acción</th></tr></thead>
                         <tbody>
                           {ubicaciones.map(u => (
                             <tr key={u.id} style={getRowStyle(u.activo)}>
@@ -182,7 +181,7 @@ export default function MaestrosPage() {
                          <Button variant="warning" className="btn-lg px-4 shadow-sm text-dark fw-bold" onClick={() => abrirModal('ESTADO')}>+ Agregar</Button>
                       </div>
                       <Table hover responsive className="align-middle">
-                        <thead className="bg-light"><tr><th className="py-3 ps-4">Etiqueta</th><th className="text-end pe-4">Acción</th></tr></thead>
+                        <thead className=""><tr><th className="py-3 ps-4">Etiqueta</th><th className="text-end pe-4">Acción</th></tr></thead>
                         <tbody>
                           {estados.map(est => (
                             <tr key={est.id} style={getRowStyle(est.activo)}>
@@ -215,7 +214,7 @@ export default function MaestrosPage() {
         <Modal.Body className="p-4">
           <Form.Group>
             <Form.Label className="fs-5 text-secondary">Nombre:</Form.Label>
-            <Form.Control autoFocus size="lg" className="py-3 fs-5 fw-bold text-dark bg-light border-0" value={nuevoNombre} onChange={e => setNuevoNombre(e.target.value)} />
+            <Form.Control autoFocus size="lg" className="py-3 fs-5 fw-bold" value={nuevoNombre} onChange={e => setNuevoNombre(e.target.value)} />
           </Form.Group>
         </Modal.Body>
         <Modal.Footer className="border-0 pt-0 pb-4 pe-4">

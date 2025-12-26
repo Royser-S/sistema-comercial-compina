@@ -34,9 +34,9 @@ export default function ProjectTable({
   };
 
   return (
-    <div className="table-responsive shadow-sm bg-white p-3" style={{ borderRadius: '15px' }}>
+    <div className="table-responsive shadow-sm p-3" style={{ borderRadius: '15px' }}>
       <Table bordered hover className="align-middle mb-0" style={{ minWidth: '1600px', fontSize: '1rem' }}>
-<thead className="bg-light text-uppercase text-secondary">
+<thead className=" text-uppercase text-secondary">
           <tr>
             <th className="py-3">Ejecutiva</th>
             <th>Fecha</th>

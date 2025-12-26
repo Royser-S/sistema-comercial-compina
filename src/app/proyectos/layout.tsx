@@ -37,7 +37,7 @@ export default function ProtectedLayout({
   // MIENTRAS VERIFICAMOS, MOSTRAMOS UN CARGANDO...
   if (loading) {
     return (
-      <div className="d-flex justify-content-center align-items-center vh-100 bg-light">
+      <div className="d-flex justify-content-center align-items-center vh-100">
         <Spinner animation="border" variant="warning" />
         <span className="ms-3 fw-bold text-secondary">Verificando acceso...</span>
       </div>
@@ -48,8 +48,8 @@ export default function ProtectedLayout({
   return (
     <>
       {/* Aquí podrías poner un Navbar común para todas las ejecutivas */}
-      <div className="min-vh-100 bg-light">
-        {children}
+<div className="min-vh-100">        
+  {children}
       </div>
     </>
   );

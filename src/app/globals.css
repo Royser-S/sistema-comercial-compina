@@ -1,44 +1,150 @@
-/* src/app/globals.css */
-
+/* =========================================
+   1. VARIABLES DE TEMA
+   ========================================= */
 :root {
-  /* Tu variable de color Naranja Corporativo */
-  --color-corporate: #eb690b; 
-  --color-bg-light: #f4f6f9;
+  /* MODO CLARO (Default) */
+  --body-bg: #f4f6f9;
+  --text-color: #212529;
+  --text-secondary: #6c757d;
+  --navbar-bg: #ffffff;
+  --card-bg: #ffffff;
+  --border-color: #dee2e6;
+  --input-bg: #ffffff;
+  --input-border: #ced4da;
 }
 
+body.dark-mode {
+  /* MODO OSCURO */
+  --body-bg: #121212;         /* Fondo Negro Profundo */
+  --text-color: #e0e0e0;      /* Texto Blanco Suave */
+  --text-secondary: #adb5bd;  /* Gris claro para textos secundarios */
+  --navbar-bg: #1e1e1e;       /* Gris Oscuro para barras */
+  --card-bg: #1e1e1e;         /* Gris Oscuro para tarjetas */
+  --border-color: #333333;    /* Bordes sutiles */
+  --input-bg: #2d2d2d;        /* Inputs oscuros */
+  --input-border: #444444;
+}
+
+/* =========================================
+   2. APLICACIÓN GLOBAL
+   ========================================= */
 body {
-  background-color: var(--color-bg-light);
+  background-color: var(--body-bg) !important;
+  color: var(--text-color) !important;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* --- CLASES PERSONALIZADAS --- */
-
-/* Botón Corporativo (Reemplaza al btn-primary de Bootstrap) */
-.btn-corporate {
-  background-color: var(--color-corporate) !important;
-  border-color: var(--color-corporate) !important;
-  color: white !important;
-  font-weight: bold !important;
-  transition: all 0.3s ease;
+/* Forzar colores en contenedores principales */
+.bg-white, .bg-light, .card, .navbar, .footer-themed {
+  background-color: var(--card-bg) !important;
+  color: var(--text-color) !important;
+  border-color: var(--border-color) !important;
 }
 
-.btn-corporate:hover {
-  background-color: #d15800 !important; /* Un poco más oscuro al pasar el mouse */
-  border-color: #d15800 !important;
+/* =========================================
+   3. ARREGLO DE TEXTOS OCULTOS (IMPORTANTE)
+   ========================================= */
+
+/* 3.1 ETIQUETAS DE FORMULARIO (Labels)
+   Esto arregla que los títulos "Fecha", "Ejecutiva" se vean oscuros */
+body.dark-mode .form-label, 
+body.dark-mode label {
+  color: var(--text-color) !important;
 }
 
-/* Texto Corporativo */
-.text-corporate {
-  color: var(--color-corporate) !important;
+/* 3.2 INPUTS Y SELECTS
+   Arregla el fondo blanco en los campos de texto */
+body.dark-mode .form-control, 
+body.dark-mode .form-select,
+body.dark-mode .input-group-text {
+  background-color: var(--input-bg) !important;
+  border-color: var(--input-border) !important;
+  color: var(--text-color) !important;
 }
 
-/* Fondos */
-.bg-corporate-light {
-  background-color: var(--color-bg-light);
+body.dark-mode .form-control::placeholder {
+  color: #888;
 }
 
-/* Tarjetas limpias */
-.card-clean {
-  border-radius: 15px;
-  border: none;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.08); /* Sombra suave y moderna */
+body.dark-mode .form-control:focus,
+body.dark-mode .form-select:focus {
+  background-color: #333333 !important;
+  color: #ffffff !important;
+  border-color: #666;
+  box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.1);
+}
+
+/* 3.3 MENÚS DESPLEGABLES (El error más común) 
+   Esto arregla que las opciones del "Select" se vean blancas */
+body.dark-mode .dropdown-menu {
+  background-color: var(--card-bg);
+  border-color: var(--border-color);
+}
+body.dark-mode .dropdown-item {
+  color: var(--text-color);
+}
+body.dark-mode .dropdown-item:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+/* =========================================
+   4. ARREGLO DE TABLAS (CORRECCIÓN FINAL)
+   ========================================= */
+/* Fuerza que la tabla y todo su contenido sea oscuro */
+body.dark-mode .table,
+body.dark-mode .table > :not(caption) > * > * {
+  background-color: var(--card-bg) !important; /* Fondo oscuro FORZADO */
+  color: var(--text-color) !important;         /* Texto claro FORZADO */
+  border-color: var(--border-color);           /* Bordes sutiles */
+}
+
+/* Encabezados de tabla (un poco más oscuros para diferenciar) */
+body.dark-mode .table thead th {
+  background-color: #1a1a1a !important; /* Negro casi puro */
+  color: #ffffff !important;
+}
+
+/* Efecto Hover en filas */
+body.dark-mode .table-hover tbody tr:hover > * {
+  background-color: rgba(255, 255, 255, 0.08) !important; /* Gris claro al pasar mouse */
+  color: #ffffff !important;
+}
+
+/* Arreglo específico para la fila de "No se encontraron resultados" */
+body.dark-mode .table tbody tr td.text-center {
+  background-color: var(--card-bg) !important;
+  color: var(--text-secondary) !important;
+}
+/* =========================================
+   5. MODALES Y BOTONES
+   ========================================= */
+body.dark-mode .modal-content {
+  background-color: var(--card-bg);
+  border-color: var(--border-color);
+}
+body.dark-mode .modal-header,
+body.dark-mode .modal-footer {
+  border-color: var(--border-color);
+}
+body.dark-mode .btn-close {
+  filter: invert(1) grayscale(100%) brightness(200%); /* Pone la X en blanco */
+}
+
+/* Textos secundarios específicos */
+body.dark-mode .text-muted {
+  color: var(--text-secondary) !important;
+}
+body.dark-mode .text-dark,
+body.dark-mode .text-secondary {
+  color: var(--text-color) !important;
+}
+
+/* Links del Footer */
+.footer-link {
+  transition: transform 0.2s, color 0.2s;
+}
+.footer-link:hover {
+  transform: translateY(-2px);
+  color: #fd7e14 !important; /* Naranja corporativo */
 }

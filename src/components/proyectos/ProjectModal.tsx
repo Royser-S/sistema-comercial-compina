@@ -194,7 +194,7 @@ export default function ProjectModal({ show, handleClose, onSuccess, proyectoEdi
 
     return (
         <Modal show={show} onHide={handleClose} size="lg" backdrop="static">
-            <Modal.Header closeButton className="bg-light">
+            <Modal.Header closeButton className="">
                 <Modal.Title className="fw-bold text-secondary">
                     {proyectoEditar ? '✏️ Editar Proyecto' : '✨ Nuevo Proyecto'}
                 </Modal.Title>
@@ -252,7 +252,7 @@ export default function ProjectModal({ show, handleClose, onSuccess, proyectoEdi
                     </Row>
 
                     {/* KIT SWITCH */}
-                    <div className="p-3 mb-3 bg-light rounded border">
+                    <div className="p-3 mb-3  rounded border">
                         <Form.Check
                             type="switch" label="¿Es un KIT?" checked={esKit}
                             onChange={(e) => setEsKit(e.target.checked)}
@@ -266,7 +266,7 @@ export default function ProjectModal({ show, handleClose, onSuccess, proyectoEdi
                     {/* PRODUCTOS */}
                     <Form.Label className="fw-bold">Productos *</Form.Label>
                     <Table size="sm" bordered>
-                        <thead className="bg-light">
+                        <thead className="">
                             <tr>
                                 <th>Producto</th>
                                 <th style={{ width: '100px' }}>Cant.</th>
@@ -324,7 +324,7 @@ export default function ProjectModal({ show, handleClose, onSuccess, proyectoEdi
 
                             {/* 1. FOTOS EXISTENTES (Solo modo edición) */}
                             {imagenesExistentes.length > 0 && (
-                                <div className="d-flex flex-wrap gap-2 mb-3 p-2 border rounded bg-light">
+                                <div className="d-flex flex-wrap gap-2 mb-3 p-2 border rounded ">
                                     {imagenesExistentes.map(img => (
                                         <div key={img.id} className="position-relative text-center" style={{ width: '100px' }}>
                                             <Image src={img.imagen_url} alt="foto" thumbnail style={{ height: '80px', objectFit: 'cover' }} />
