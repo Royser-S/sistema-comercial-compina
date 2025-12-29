@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Container, Button, Alert, Spinner } from 'react-bootstrap';
 import { supabase } from '@/lib/supabase'; // <--- Agregar
 // Servicios y Tipos
+
 import { getProyectos } from '@/services/proyectosService';
 import { getEjecutivas, getUbicaciones, getEstados } from '@/services/maestrosService';
 import { Proyecto, Ejecutiva, Ubicacion } from '@/types/database';
@@ -28,8 +29,8 @@ export default function ProyectosPage() {
 
   // 2. ESTADOS DE FILTROS
   const [filtros, setFiltros] = useState({
-    ejecutiva: '', fecha: '', ubicacion: '', tipo: '',
-    proyecto: '', empresa: '', producto: ''
+    ejecutiva: '', fecha: '', ubicaciones: [] as string[], tipo: '',estado: '',
+    proyecto: '', empresa: '', producto: '', nombreKit: ''  
   });
 
   // 3. ESTADOS DE MODALES
@@ -71,28 +72,67 @@ export default function ProyectosPage() {
       setLoading(false);
     }
   };
-  // 5. LÓGICA DE FILTRADO
+// 5. LÓGICA DE FILTRADO MEJORADA
   const proyectosFiltrados = proyectos.filter((p) => {
+    // Filtro Ejecutiva
     if (filtros.ejecutiva && p.ejecutiva_id.toString() !== filtros.ejecutiva) return false;
-    if (filtros.ubicacion && p.ubicacion_id.toString() !== filtros.ubicacion) return false;
+    
+    // Filtro Ubicación (MULTIPLE) 
+    // Si hay ubicaciones seleccionadas, verificamos si la del proyecto está en la lista
+    if (filtros.ubicaciones.length > 0 && !filtros.ubicaciones.includes(p.ubicacion_id.toString())) return false;
+
+    // Filtro Tipo
     if (filtros.tipo === 'kit' && !p.es_kit) return false;
     if (filtros.tipo === 'unitario' && p.es_kit) return false;
+
+    // --- NUEVO: FILTRO POR ESTADO ---
+    if (filtros.estado && p.estado_id.toString() !== filtros.estado) return false;
+    // --------------------------------
+
+    // Búsquedas Texto
     if (filtros.proyecto && !p.nombre_proyecto.toLowerCase().includes(filtros.proyecto.toLowerCase())) return false;
     if (filtros.empresa && !p.nombre_empresa.toLowerCase().includes(filtros.empresa.toLowerCase())) return false;
     if (filtros.fecha && !p.fecha_mes_anio.includes(filtros.fecha)) return false;
+
+    // Filtro Productos
     if (filtros.producto) {
       const termino = filtros.producto.toLowerCase();
       const tieneProducto = p.tb_detalle_productos?.some(prod => prod.nombre_producto.toLowerCase().includes(termino));
       if (!tieneProducto) return false;
     }
+
+    // NUEVO: Filtro Nombre Kit
+    if (filtros.nombreKit) {
+      // Si el usuario busca un kit, pero el proyecto NO es kit, lo descartamos
+      if (!p.es_kit) return false;
+      // Si es kit, validamos el nombre (evitando nulos)
+      const nombreK = p.nombre_kit?.toLowerCase() || '';
+      if (!nombreK.includes(filtros.nombreKit.toLowerCase())) return false;
+    }
+
     return true;
   });
 
   // Manejadores
   const handleFilterChange = (campo: string, valor: string) => setFiltros(prev => ({ ...prev, [campo]: valor }));
 
-  const limpiarFiltros = () => setFiltros({
-    ejecutiva: '', fecha: '', ubicacion: '', tipo: '', proyecto: '', empresa: '', producto: ''
+  // NUEVO: Manejador Especial para Multi-Select de Ubicaciones
+  const toggleUbicacion = (idUbicacion: string) => {
+    setFiltros(prev => {
+        const existe = prev.ubicaciones.includes(idUbicacion);
+        if (existe) {
+            // Si ya está, lo quitamos
+            return { ...prev, ubicaciones: prev.ubicaciones.filter(id => id !== idUbicacion) };
+        } else {
+            // Si no está, lo agregamos
+            return { ...prev, ubicaciones: [...prev.ubicaciones, idUbicacion] };
+        }
+    });
+  };
+
+
+const limpiarFiltros = () => setFiltros({
+    ejecutiva: '', fecha: '', ubicaciones: [], tipo: '', estado: '', proyecto: '', empresa: '', producto: '', nombreKit: ''
   });
 
   const handleOpenGallery = (proyecto: Proyecto) => {
@@ -145,9 +185,11 @@ export default function ProyectosPage() {
         <ProjectFilters
           filtros={filtros}
           onChange={handleFilterChange}
+          onToggleUbicacion={toggleUbicacion} // <--- NUEVA PROP
           onClean={limpiarFiltros}
           listaEjecutivas={listaEjecutivas}
           listaUbicaciones={listaUbicaciones}
+          listaEstados={listaEstados} // <--- 3. PASAMOS LA LISTA DE ESTADOS
         />
 
         {/* COMPONENTE DE TABLA */}

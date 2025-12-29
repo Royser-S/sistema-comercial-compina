@@ -69,8 +69,12 @@ export default function ProjectTable({
                 <td className="fw-semibold">{p.nombre_empresa}</td>
                 <td>
                   {p.es_kit ? 
-                    <Badge bg="info" text="dark" className="p-2">KIT: {p.nombre_kit}</Badge> : 
-                    <Badge bg="light" text="dark" className="border p-2">Unitario</Badge>
+                    <Badge bg="success" className="p-2">
+                       📦 KIT: {p.nombre_kit}
+                    </Badge> : 
+                    <Badge bg="primary" className="p-2">
+                       👤 Unitario
+                    </Badge>
                   }
                 </td>
                 <td colSpan={2} className="p-0">
