@@ -1,7 +1,5 @@
 import { supabase } from '@/lib/supabase';
 import { Proyecto } from '@/types/database';
-import imageCompression from 'browser-image-compression';
-import { v4 as uuidv4 } from 'uuid';
 
 // --- LEER PROYECTOS ---
 export const getProyectos = async (): Promise<Proyecto[]> => {
@@ -21,8 +19,10 @@ export const getProyectos = async (): Promise<Proyecto[]> => {
   return (data as any) || [];
 };
 
-// --- CREAR PROYECTO ---
-export const createProyecto = async (formData: any, productos: any[], imagenes: File[]) => {
+// --- CREAR PROYECTO (ADAPTADO CLOUDINARY) ---
+// Nota: 'imagenesUrls' ahora recibe un array de textos (links), no archivos
+export const createProyecto = async (formData: any, productos: any[], imagenesUrls: string[]) => {
+  
   // 1. Insertar Proyecto
   const { data: proyectoData, error: projError } = await supabase
     .from('tb_proyectos')
@@ -36,7 +36,7 @@ export const createProyecto = async (formData: any, productos: any[], imagenes: 
       motivo_compra: formData.motivo,
       innovador: formData.innovador,
       ubicacion_id: formData.ubicacionId,
-      estado_id: 1, 
+      estado_id: formData.estadoId || 1, 
     })
     .select()
     .single();
@@ -44,19 +44,37 @@ export const createProyecto = async (formData: any, productos: any[], imagenes: 
   if (projError) throw projError;
   const proyectoId = proyectoData.id;
 
-  // 2. Insertar Productos y Fotos (Usamos función auxiliar abajo)
+  // 2. Insertar Productos
   await insertProductos(proyectoId, productos);
-  await uploadImagenes(proyectoId, imagenes);
+
+  // 3. Insertar Links de Fotos (Nueva Lógica)
+  await insertFotosCloudinary(proyectoId, imagenesUrls);
 
   return true;
 };
 
-// --- ACTUALIZAR PROYECTO (NUEVO) ---
+export const deleteProyecto = async (id: number) => {
+  // 1. Borrar los items de la galería (Las fotos referenciadas)
+  const { error: errorGaleria } = await supabase.from('tb_galeria_proyectos').delete().eq('proyecto_id', id);
+  if (errorGaleria) throw errorGaleria;
+
+  // 2. Borrar los productos asociados
+  const { error: errorProd } = await supabase.from('tb_detalle_productos').delete().eq('proyecto_id', id);
+  if (errorProd) throw errorProd;
+
+  // 3. Finalmente borrar el proyecto principal
+  const { error } = await supabase.from('tb_proyectos').delete().eq('id', id);
+  if (error) throw error;
+
+  return true;
+};
+
+// --- ACTUALIZAR PROYECTO (ADAPTADO CLOUDINARY) ---
 export const updateProyecto = async (
   id: number, 
   formData: any, 
   productos: any[], 
-  newImages: File[], 
+  newImagesUrls: string[], // <-- Recibe links nuevos
   idsFotosAEliminar: number[]
 ) => {
   try {
@@ -73,35 +91,25 @@ export const updateProyecto = async (
         motivo_compra: formData.motivo,
         innovador: formData.innovador,
         ubicacion_id: formData.ubicacionId,
-        estado_id: formData.estadoId, // <--- ¡NUEVA LÍNEA CLAVE!
+        estado_id: formData.estadoId, 
       })
       .eq('id', id);
 
     if (projError) throw projError;
 
-    // 2. Actualizar Productos: Borramos todos los viejos y ponemos los nuevos (más seguro)
+    // 2. Actualizar Productos (Borrar y Crear)
     await supabase.from('tb_detalle_productos').delete().eq('proyecto_id', id);
     await insertProductos(id, productos);
 
-    // 3. Eliminar Fotos marcadas para borrar
+    // 3. Eliminar Fotos marcadas (Solo de la BD)
     if (idsFotosAEliminar.length > 0) {
-      // Primero obtenemos los nombres de archivo para borrarlos del Storage
-      const { data: fotos } = await supabase
-        .from('tb_galeria_proyectos')
-        .select('nombre_archivo')
-        .in('id', idsFotosAEliminar);
-
-      if (fotos && fotos.length > 0) {
-        const rutas = fotos.map(f => f.nombre_archivo);
-        await supabase.storage.from('muestras').remove(rutas);
-      }
-      
-      // Luego borramos el registro de la base de datos
+      // Nota: Con Cloudinary Unsigned no podemos borrar el archivo físico desde el front,
+      // pero borramos el registro de la BD para que ya no aparezca.
       await supabase.from('tb_galeria_proyectos').delete().in('id', idsFotosAEliminar);
     }
 
-    // 4. Subir Nuevas Fotos (si las hay)
-    await uploadImagenes(id, newImages);
+    // 4. Insertar Nuevas Fotos (Links)
+    await insertFotosCloudinary(id, newImagesUrls);
 
     return true;
   } catch (error) {
@@ -110,11 +118,12 @@ export const updateProyecto = async (
   }
 };
 
-// --- FUNCIONES AUXILIARES (Para no repetir código) ---
+// --- FUNCIONES AUXILIARES ---
+
 async function insertProductos(proyectoId: number, productos: any[]) {
   const productosAInsertar = productos.map(p => ({
     proyecto_id: proyectoId,
-    nombre_producto: p.nombre, // Asegúrate que en tu front mandes 'nombre'
+    nombre_producto: p.nombre,
     cantidad: parseInt(p.cantidad)
   }));
   if (productosAInsertar.length > 0) {
@@ -122,21 +131,15 @@ async function insertProductos(proyectoId: number, productos: any[]) {
   }
 }
 
-async function uploadImagenes(proyectoId: number, imagenes: File[]) {
-  if (imagenes.length > 0) {
-    for (const imgFile of imagenes) {
-      const options = { maxSizeMB: 0.5, maxWidthOrHeight: 1200 };
-      const compressedFile = await imageCompression(imgFile, options);
-      const fileName = `${proyectoId}/${uuidv4()}-${imgFile.name}`;
-      
-      await supabase.storage.from('muestras').upload(fileName, compressedFile);
-      const { data } = supabase.storage.from('muestras').getPublicUrl(fileName);
-      
-      await supabase.from('tb_galeria_proyectos').insert({
-        proyecto_id: proyectoId,
-        imagen_url: data.publicUrl,
-        nombre_archivo: fileName
-      });
-    }
+// NUEVA FUNCIÓN: Mucho más simple, solo guarda texto.
+async function insertFotosCloudinary(proyectoId: number, urls: string[]) {
+  if (urls.length > 0) {
+    const fotosParaInsertar = urls.map(url => ({
+      proyecto_id: proyectoId,
+      imagen_url: url,          // El link que nos dio Cloudinary
+      nombre_archivo: 'cloudinary_img' // Valor referencial
+    }));
+    
+    await supabase.from('tb_galeria_proyectos').insert(fotosParaInsertar);
   }
 }

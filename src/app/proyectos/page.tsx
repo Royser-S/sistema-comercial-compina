@@ -5,7 +5,7 @@ import { Container, Button, Alert, Spinner } from 'react-bootstrap';
 import { supabase } from '@/lib/supabase'; // <--- Agregar
 // Servicios y Tipos
 
-import { getProyectos } from '@/services/proyectosService';
+import { getProyectos, deleteProyecto } from '@/services/proyectosService';
 import { getEjecutivas, getUbicaciones, getEstados } from '@/services/maestrosService';
 import { Proyecto, Ejecutiva, Ubicacion } from '@/types/database';
 // Componentes
@@ -14,6 +14,7 @@ import ProjectFilters from '@/components/proyectos/ProjectFilters'; // <--- Nuev
 import ProjectTable from '@/components/proyectos/ProjectTable';     // <--- Nuevo
 import ProjectModal from '@/components/proyectos/ProjectModal';
 import ImageViewerModal from '@/components/proyectos/ImageViewerModal';
+
 
 export default function ProyectosPage() {
   // 1. ESTADOS DE DATOS
@@ -167,6 +168,25 @@ const limpiarFiltros = () => setFiltros({
     }
   };
 
+  // --- FUNCIÓN PARA BORRAR (SOLO SISTEMAS) ---
+  const handleDeleteProject = async (id: number) => {
+    if (!confirm('⚠️ ¿Estás segura de eliminar este registro de prueba?')) return;
+    
+    try {
+      setLoading(true);
+      await deleteProyecto(id); // Llamamos al servicio
+      
+      // Actualizamos la lista visualmente (quitamos el proyecto borrado)
+      setProyectos(prev => prev.filter(p => p.id !== id));
+      
+    } catch (err) {
+      console.error(err);
+      setError('Error al eliminar el proyecto.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
 <div className="min-vh-100">      
   <TopNavbar />
@@ -200,8 +220,13 @@ const limpiarFiltros = () => setFiltros({
 
           // --- NUEVAS PROPIEDADES ---
           esJefa={rolUsuario === 'JEFA'}
+          // Permiso para BORRAR (Sistemas / Admin)
+          esSistemas={rolUsuario === 'SISTEMAS' || rolUsuario === 'ADMIN'}
           listaEstados={listaEstados}
           onStateChange={handleQuickStateChange}
+          
+          // 👇 ¡AGREGA ESTA LÍNEA AQUÍ! 👇
+          onDelete={handleDeleteProject}
         />
 
         {/* MODALES OCULTOS */}

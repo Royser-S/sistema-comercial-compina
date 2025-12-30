@@ -10,6 +10,8 @@ interface Props {
   esJefa: boolean;              // <--- NUEVO
   listaEstados: Estado[];       // <--- NUEVO
   onStateChange: (idProyecto: number, idNuevoEstado: string) => void; // <--- NUEVO
+  esSistemas: boolean;   // <--- NUEVO: Para borrar registros
+  onDelete: (id: number) => void;
 }
 
 export default function ProjectTable({ 
@@ -18,8 +20,13 @@ export default function ProjectTable({
   onEdit, 
   esJefa, 
   listaEstados, 
-  onStateChange 
+  onStateChange,
+  esSistemas,
+  onDelete
 }: Props) {
+
+  
+
   
   const formatDate = (fecha: string) => {
     if (!fecha) return '-';
@@ -128,6 +135,17 @@ export default function ProjectTable({
                 <td>{p.ubicacion?.nombre}</td>
                 <td className="text-center">
                   <Button size="sm" variant="outline-primary" onClick={() => onEdit(p)}>✏️ Editar</Button>
+                  {/* 🔒 BOTÓN SOLO PARA SISTEMAS 🔒 */}
+                    {esSistemas && (
+                      <Button 
+                        size="sm" 
+                        variant="outline-danger" 
+                        onClick={() => onDelete(p.id)}
+                        title="Eliminar registro (Solo Sistemas)"
+                      >
+                        🗑️
+                      </Button>
+                    )}
                 </td>
               </tr>
             ))

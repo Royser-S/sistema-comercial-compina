@@ -5,6 +5,7 @@ import { Modal, Button, Form, Row, Col, Table, Spinner, Alert, Image, Badge, Dro
 import { getEjecutivas, getUbicaciones } from '@/services/maestrosService';
 import { createProyecto, updateProyecto } from '@/services/proyectosService';
 import { Ejecutiva, Ubicacion, Proyecto, GaleriaProyecto } from '@/types/database';
+import { uploadToCloudinary } from '@/utils/cloudinaryService';
 
 interface Props {
     show: boolean;
@@ -165,37 +166,45 @@ export default function ProjectModal({ show, handleClose, onSuccess, proyectoEdi
         setError(null);
 
         try {
-            // PREPARAMOS LA DATA
-            // ⚠️ IMPORTANTE: Dependiendo de tu Backend, tendrás que enviar 
-            // 'ubicacionesIds' (array) o solo la primera 'ubicacionesIds[0]' (si la BD es vieja).
-            // Aquí enviamos la primera para que no rompa tu base actual, 
-            // PERO si ya actualizaste la BD, cambia esto para enviar el array completo.
+            // ---------------------------------------------------------
+            // 🚀 PASO A: SUBIR IMÁGENES A CLOUDINARY
+            // ---------------------------------------------------------
+            // Recorremos las imágenes nuevas y las subimos una por una
+            const uploadPromises = imagenesNuevas.map(file => uploadToCloudinary(file));
+            
+            // Esperamos a que TODAS suban y obtenemos un array de URLs (strings)
+            const urlsCloudinary = await Promise.all(uploadPromises);
+
+            // ---------------------------------------------------------
+            // 💾 PASO B: GUARDAR DATOS EN SUPABASE
+            // ---------------------------------------------------------
             
             const formData = {
-                fecha, 
-                ejecutivaId, 
-                ubicacionId: ubicacionesIds[0], // <--- OJO: Enviamos la primera seleccionada por compatibilidad
-                // Si tu backend soporta multiples, usa: ubicaciones: ubicacionesIds
-                nombreProyecto, 
-                nombreEmpresa,
-                motivo, 
-                innovador, 
-                esKit, 
-                nombreKit,
-                estadoId 
+                fecha, ejecutivaId, ubicacionId: ubicacionesIds[0],
+                nombreProyecto, nombreEmpresa, motivo, innovador, esKit, nombreKit, estadoId 
             };
 
             if (proyectoEditar) {
-                await updateProyecto(proyectoEditar.id, formData, productos, imagenesNuevas, idsFotosAEliminar);
+                // En edición es un poco más complejo porque mezclamos fotos viejas y nuevas.
+                // PERO, para simplificar, usualmente el servicio espera:
+                // 1. Datos del proyecto
+                // 2. Productos
+                // 3. URLs NUEVAS (strings) <-- Esto cambia
+                // 4. IDs de fotos a eliminar
+                
+                // NOTA: Tienes que actualizar tu 'updateProyecto' para que acepte strings en vez de Files
+                await updateProyecto(proyectoEditar.id, formData, productos, urlsCloudinary, idsFotosAEliminar);
             } else {
-                await createProyecto(formData, productos, imagenesNuevas);
+                // En creación es más fácil. Pasamos las URLs ya listas.
+                // NOTA: Tienes que actualizar tu 'createProyecto' para que acepte strings en vez de Files
+                await createProyecto(formData, productos, urlsCloudinary);
             }
 
             onSuccess();
             handleClose();
         } catch (err: any) {
             console.error(err);
-            setError('Error al guardar. Intenta nuevamente.');
+            setError('Error al guardar. Verifica tu conexión o las imágenes.');
         } finally {
             setLoading(false);
         }
