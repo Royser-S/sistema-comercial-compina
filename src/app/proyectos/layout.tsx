@@ -19,14 +19,11 @@ export default function ProtectedLayout({
 
   const checkUser = async () => {
     try {
-      // 1. Preguntamos a Supabase: "¿Hay alguien logueado?"
       const { data: { user } } = await supabase.auth.getUser();
 
-      // 2. Si NO hay usuario, lo mandamos al inicio (Login)
       if (!user) {
         router.push('/'); 
       } else {
-        // 3. Si SÍ hay usuario, dejamos de cargar y mostramos la página
         setLoading(false);
       }
     } catch (error) {
@@ -34,7 +31,6 @@ export default function ProtectedLayout({
     }
   };
 
-  // MIENTRAS VERIFICAMOS, MOSTRAMOS UN CARGANDO...
   if (loading) {
     return (
       <div className="d-flex justify-content-center align-items-center vh-100">
@@ -44,10 +40,8 @@ export default function ProtectedLayout({
     );
   }
 
-  // SI PASÓ LA SEGURIDAD, MOSTRAMOS EL CONTENIDO (LA TABLA)
   return (
     <>
-      {/* Aquí podrías poner un Navbar común para todas las ejecutivas */}
 <div className="min-vh-100">        
   {children}
       </div>

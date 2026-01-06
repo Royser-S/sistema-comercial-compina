@@ -80,8 +80,19 @@ export default function ProyectosPage() {
     
     // Filtro Ubicación (MULTIPLE) 
     // Si hay ubicaciones seleccionadas, verificamos si la del proyecto está en la lista
-    if (filtros.ubicaciones.length > 0 && !filtros.ubicaciones.includes(p.ubicacion_id.toString())) return false;
+if (filtros.ubicaciones.length > 0) {
+      // 1. Verificamos la Ubicación General (Protegemos contra null con ?.)
+      const ubiGeneral = p.ubicacion_id?.toString();
+      const matchGeneral = ubiGeneral && filtros.ubicaciones.includes(ubiGeneral);
 
+      // 2. Verificamos si ALGÚN producto interno coincide con el filtro (Para los Kits)
+      const matchProductos = p.tb_detalle_productos?.some(prod => 
+        prod.ubicacion_id && filtros.ubicaciones.includes(prod.ubicacion_id.toString())
+      );
+
+      // 3. Si NO coincide ni la general ni ningún producto, ocultamos el proyecto
+      if (!matchGeneral && !matchProductos) return false;
+    }
     // Filtro Tipo
     if (filtros.tipo === 'kit' && !p.es_kit) return false;
     if (filtros.tipo === 'unitario' && p.es_kit) return false;

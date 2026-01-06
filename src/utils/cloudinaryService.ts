@@ -1,15 +1,33 @@
+import imageCompression from 'browser-image-compression'; 
 export const uploadToCloudinary = async (file: File): Promise<string> => {
-  // Leemos las variables del entorno
   const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
   const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_PRESET;
 
-  // Validación por si se te olvida ponerlas
   if (!cloudName || !uploadPreset) {
     throw new Error('Faltan las variables de entorno de Cloudinary');
   }
 
+
+  const options = {
+    maxSizeMB: 1,          
+    maxWidthOrHeight: 1920, 
+    useWebWorker: true,    
+  };
+
+  let fileToUpload = file;
+
+  try {
+    if (file.type.startsWith('image/')) {
+        console.log(`Original: ${(file.size / 1024 / 1024).toFixed(2)} MB`);
+        fileToUpload = await imageCompression(file, options);
+        console.log(`Comprimida: ${(fileToUpload.size / 1024 / 1024).toFixed(2)} MB`);
+    }
+  } catch (err) {
+    console.warn('No se pudo comprimir la imagen, se subirá la original:', err);
+  }
+
   const formData = new FormData();
-  formData.append('file', file);
+  formData.append('file', fileToUpload); 
   formData.append('upload_preset', uploadPreset);
 
   try {
@@ -23,7 +41,7 @@ export const uploadToCloudinary = async (file: File): Promise<string> => {
     }
 
     const data = await response.json();
-    return data.secure_url; 
+    return data.secure_url;
   } catch (error) {
     console.error('Error en Cloudinary:', error);
     throw error;

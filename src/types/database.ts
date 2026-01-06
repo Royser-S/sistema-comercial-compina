@@ -3,6 +3,12 @@ export interface DetalleProducto {
   id: number;
   nombre_producto: string;
   cantidad: number;
+
+  ubicacion_id?: number | null; 
+  ubicacion?: {     
+    nombre: string;
+  };
+
 }
 
 export interface GaleriaProyecto {
@@ -11,37 +17,34 @@ export interface GaleriaProyecto {
   nombre_archivo: string;
 }
 
-// 2. Tablas Maestras (AQUÍ ESTABA EL ERROR, FALTABAN LOS ID)
+
 export interface Ejecutiva { 
-  id: number;              // <--- Agregado
+  id: number;              
   nombre_completo: string; 
-  activo: boolean; // <--- ¡Esto faltaba!
+  activo: boolean; 
 }
 
 export interface Estado { 
-  id: number;              // <--- Agregado
+  id: number;             
   nombre: string; 
-  activo: boolean; // <--- ¡Esto faltaba!
+  activo: boolean; 
 }
 
 export interface Ubicacion { 
-  id: number;              // <--- Agregado
+  id: number;             
   nombre: string; 
-  activo: boolean; // <--- ¡Esto faltaba!
+  activo: boolean; 
 }
 
-// 3. El Proyecto
 export interface Proyecto {
   id: number;
   fecha_mes_anio: string;
   
-  // Nombres y Textos
   nombre_proyecto: string;
   nombre_empresa: string;
   motivo_compra: string;   
   innovador: string;       
   
-  // Lógica Kit
   es_kit: boolean;
   nombre_kit?: string;
 

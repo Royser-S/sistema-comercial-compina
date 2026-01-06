@@ -6,6 +6,7 @@ import { getEjecutivas, getUbicaciones } from '@/services/maestrosService';
 import { createProyecto, updateProyecto } from '@/services/proyectosService';
 import { Ejecutiva, Ubicacion, Proyecto, GaleriaProyecto } from '@/types/database';
 import { uploadToCloudinary } from '@/utils/cloudinaryService';
+import Swal from 'sweetalert2';
 
 interface Props {
     show: boolean;
@@ -20,18 +21,20 @@ export default function ProjectModal({ show, handleClose, onSuccess, proyectoEdi
     // Maestros
     const [listaEjecutivas, setListaEjecutivas] = useState<Ejecutiva[]>([]);
     const [listaUbicaciones, setListaUbicaciones] = useState<Ubicacion[]>([]);
-    const [estadoId, setEstadoId] = useState('1'); 
+    const [estadoId, setEstadoId] = useState('1');
 
     // Estado UI
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+
+
     // Campos Formulario
     const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0]);
     const [ejecutivaId, setEjecutivaId] = useState('');
-    
+
     // --- CAMBIO 1: AHORA ES UN ARRAY DE STRING ---
-    const [ubicacionesIds, setUbicacionesIds] = useState<string[]>([]); 
+    const [ubicacionesIds, setUbicacionesIds] = useState<string[]>([]);
 
     const [nombreProyecto, setNombreProyecto] = useState('');
     const [nombreEmpresa, setNombreEmpresa] = useState('');
@@ -43,7 +46,7 @@ export default function ProjectModal({ show, handleClose, onSuccess, proyectoEdi
     const [nombreKit, setNombreKit] = useState('');
 
     // Productos
-    const [productos, setProductos] = useState([{ nombre: '', cantidad: '' }]);
+    const [productos, setProductos] = useState([{ nombre: '', cantidad: '', ubicacionId: "" }]);
 
     // Imágenes
     const [imagenesNuevas, setImagenesNuevas] = useState<File[]>([]);
@@ -66,12 +69,11 @@ export default function ProjectModal({ show, handleClose, onSuccess, proyectoEdi
         if (proyectoEditar) {
             setFecha(proyectoEditar.fecha_mes_anio);
             setEjecutivaId(proyectoEditar.ejecutiva_id.toString());
-            
+
             // --- CAMBIO 2: CARGAR UBICACIÓN EXISTENTE EN EL ARRAY ---
             // Nota: Si tu base de datos aun guarda 1 sola ID, la metemos al array.
             // Si ya soporta multiples, deberias recibir un array de IDs.
-            setUbicacionesIds([proyectoEditar.ubicacion_id.toString()]); 
-            
+            setUbicacionesIds(proyectoEditar.ubicacion_id ? [proyectoEditar.ubicacion_id.toString()] : []);
             setNombreProyecto(proyectoEditar.nombre_proyecto);
             setNombreEmpresa(proyectoEditar.nombre_empresa);
             setMotivo(proyectoEditar.motivo_compra || '');
@@ -83,29 +85,30 @@ export default function ProjectModal({ show, handleClose, onSuccess, proyectoEdi
             if (proyectoEditar.tb_detalle_productos && proyectoEditar.tb_detalle_productos.length > 0) {
                 setProductos(proyectoEditar.tb_detalle_productos.map(p => ({
                     nombre: p.nombre_producto,
-                    cantidad: p.cantidad.toString()
+                    cantidad: p.cantidad.toString(),
+                    ubicacionId: p.ubicacion_id ? p.ubicacion_id.toString() : ''
                 })));
             } else {
-                setProductos([{ nombre: '', cantidad: '' }]);
+                setProductos([{ nombre: '', cantidad: '', ubicacionId: '' }]);
             }
 
             setImagenesExistentes(proyectoEditar.tb_galeria_proyectos || []);
-            setIdsFotosAEliminar([]); 
+            setIdsFotosAEliminar([]);
         } else {
             limpiarFormulario();
         }
-        setImagenesNuevas([]); 
+        setImagenesNuevas([]);
         setError(null);
     }, [proyectoEditar, show]);
 
     // Helpers de Productos (sin cambios)
-    const addProductoRow = () => setProductos([...productos, { nombre: '', cantidad: '' }]);
+    const addProductoRow = () => setProductos([...productos, { nombre: '', cantidad: '', ubicacionId: "" }]);
     const removeProductoRow = (index: number) => {
         const nuevos = [...productos];
         nuevos.splice(index, 1);
         setProductos(nuevos);
     };
-    const updateProducto = (index: number, field: 'nombre' | 'cantidad', value: string) => {
+    const updateProducto = (index: number, field: 'nombre' | 'cantidad' | 'ubicacionId', value: string) => {
         if (field === 'cantidad') {
             if (value === '') { }
             else {
@@ -138,27 +141,57 @@ export default function ProjectModal({ show, handleClose, onSuccess, proyectoEdi
 
     // GUARDAR
     const handleSubmit = async () => {
-        // Validación actualizada: Checkeamos que el array tenga algo
-        if (!ejecutivaId || !nombreProyecto || !nombreEmpresa || ubicacionesIds.length === 0) {
-            setError('Por favor completa los campos obligatorios (*) y selecciona al menos una ubicación.');
+        // 1. Validaciones básicas (Nombre, Empresa, Ejecutiva)
+        // OJO: Quitamos 'ubicacionesIds.length === 0' de aquí porque ahora depende
+        if (!ejecutivaId || !nombreProyecto || !nombreEmpresa) {
+           Swal.fire({
+                icon: 'warning',
+                title: 'Faltan datos',
+                text: 'Por favor completa los campos obligatorios (*).',
+                confirmButtonColor: '#3085d6',
+            });
             return;
         }
 
+        // 2. Validación de Ubicación Inteligente 🧠
+        // - Si es UNITARIO: DEBE tener ubicación general.
+        // - Si es KIT: Puede estar vacía la general (porque se define por producto).
+        if (!esKit && ubicacionesIds.length === 0) {
+      Swal.fire({
+                icon: 'warning',
+                title: 'Falta Ubicación',
+                text: 'Por favor selecciona al menos una ubicación para el proyecto.',
+                confirmButtonColor: '#3085d6',
+            });
+       return;
+    }
+
+        // 3. Validación de Productos
         const productosInvalidos = productos.some(p => !p.nombre || !p.cantidad);
         if (productosInvalidos) {
-            setError('Revisa los productos: todos deben tener nombre y cantidad.');
-            return;
+Swal.fire({
+                icon: 'error',
+                title: 'Productos incompletos',
+                text: 'Revisa los productos: todos deben tener nombre y cantidad.',
+            });            return;
         }
 
+        // 4. Validación Kit vs Unitario
         if (esKit) {
             if (productos.length < 2) {
-                setError('Un KIT debe tener al menos 2 productos.');
-                return;
+Swal.fire({
+                icon: 'error',
+                title: 'Productos incompletos en Kits',
+                text: 'Un Kit debe tener por lo menos 2 productos',
+            });                return;
             }
         } else {
             if (productos.length > 1) {
-                setError('Un proyecto UNITARIO solo puede tener 1 producto.');
-                return;
+Swal.fire({
+                icon: 'error',
+                title: 'Muchos productos',
+                text: 'Un proyecto UNITARIO solo debe de tener 1 producto',
+            });                return;
             }
         }
 
@@ -166,58 +199,52 @@ export default function ProjectModal({ show, handleClose, onSuccess, proyectoEdi
         setError(null);
 
         try {
-            // ---------------------------------------------------------
-            // 🚀 PASO A: SUBIR IMÁGENES A CLOUDINARY
-            // ---------------------------------------------------------
-            // Recorremos las imágenes nuevas y las subimos una por una
+            // ... (resto de tu lógica de guardado igual que antes) ...
             const uploadPromises = imagenesNuevas.map(file => uploadToCloudinary(file));
-            
-            // Esperamos a que TODAS suban y obtenemos un array de URLs (strings)
             const urlsCloudinary = await Promise.all(uploadPromises);
 
-            // ---------------------------------------------------------
-            // 💾 PASO B: GUARDAR DATOS EN SUPABASE
-            // ---------------------------------------------------------
-            
             const formData = {
-                fecha, ejecutivaId, ubicacionId: ubicacionesIds[0],
-                nombreProyecto, nombreEmpresa, motivo, innovador, esKit, nombreKit, estadoId 
+                fecha, ejecutivaId,
+                // Si no eligió ubicación general (Kit), mandamos null o la primera que haya
+                ubicacionId: ubicacionesIds.length > 0 ? ubicacionesIds[0] : null,
+                nombreProyecto, nombreEmpresa, motivo, innovador, esKit, nombreKit, estadoId
             };
 
             if (proyectoEditar) {
-                // En edición es un poco más complejo porque mezclamos fotos viejas y nuevas.
-                // PERO, para simplificar, usualmente el servicio espera:
-                // 1. Datos del proyecto
-                // 2. Productos
-                // 3. URLs NUEVAS (strings) <-- Esto cambia
-                // 4. IDs de fotos a eliminar
-                
-                // NOTA: Tienes que actualizar tu 'updateProyecto' para que acepte strings en vez de Files
                 await updateProyecto(proyectoEditar.id, formData, productos, urlsCloudinary, idsFotosAEliminar);
             } else {
-                // En creación es más fácil. Pasamos las URLs ya listas.
-                // NOTA: Tienes que actualizar tu 'createProyecto' para que acepte strings en vez de Files
                 await createProyecto(formData, productos, urlsCloudinary);
             }
 
             onSuccess();
             handleClose();
+
+            Swal.fire({
+                icon: 'success',
+                title: '¡Excelente!',
+                text: proyectoEditar ? 'El proyecto se actualizó correctamente.' : 'El proyecto ha sido creado con éxito.',
+                timer: 2000, 
+                showConfirmButton: false
+            });
         } catch (err: any) {
             console.error(err);
-            setError('Error al guardar. Verifica tu conexión o las imágenes.');
-        } finally {
+Swal.fire({
+                icon: 'error',
+                title: 'Ocurrió un error',
+                text: 'No se pudo guardar el proyecto. Intenta de nuevo.',
+            });        } finally {
             setLoading(false);
         }
     };
 
     const limpiarFormulario = () => {
         setFecha(new Date().toISOString().split('T')[0]);
-        setEjecutivaId(''); 
+        setEjecutivaId('');
         setUbicacionesIds([]); // <--- Limpiar array
         setNombreProyecto(''); setNombreEmpresa('');
         setMotivo(''); setInnovador('');
         setEsKit(false); setNombreKit('');
-        setProductos([{ nombre: '', cantidad: '' }]);
+        setProductos([{ nombre: '', cantidad: '', ubicacionId: "" }]);
         setImagenesExistentes([]);
         setIdsFotosAEliminar([]);
     };
@@ -296,6 +323,7 @@ export default function ProjectModal({ show, handleClose, onSuccess, proyectoEdi
                             <tr>
                                 <th>Producto</th>
                                 <th style={{ width: '100px' }}>Cant.</th>
+                                {esKit && <th style={{ width: '200px' }}>Ubicación Exacta</th>}
                                 <th style={{ width: '50px' }}></th>
                             </tr>
                         </thead>
@@ -310,6 +338,24 @@ export default function ProjectModal({ show, handleClose, onSuccess, proyectoEdi
                                             onKeyDown={(e) => { if (e.key === '-' || e.key === 'e') e.preventDefault(); }}
                                         />
                                     </td>
+
+                                    {/* 👇 ¡ESTO ES LO QUE TE FALTA! AGREGALO AQUÍ 👇 */}
+                                    {esKit && (
+                                        <td>
+                                            <Form.Select
+                                                size="sm"
+                                                value={prod.ubicacionId || ''}
+                                                onChange={e => updateProducto(idx, 'ubicacionId', e.target.value)}
+                                            >
+                                                <option value="">-- Igual al Proyecto --</option>
+                                                {listaUbicaciones.map(u => (
+                                                    <option key={u.id} value={u.id}>{u.nombre}</option>
+                                                ))}
+                                            </Form.Select>
+                                        </td>
+                                    )}
+                                    {/* 👆 FIN DE LO QUE FALTA 👆 */}
+
                                     <td className="text-center">
                                         {productos.length > 1 && (
                                             <Button variant="outline-danger" size="sm" onClick={() => removeProductoRow(idx)}>🗑️</Button>
@@ -325,7 +371,7 @@ export default function ProjectModal({ show, handleClose, onSuccess, proyectoEdi
 
                     <Row className="mb-3">
                         <Col md={6}>
-                            <Form.Label>Motivo Compra</Form.Label>
+                            <Form.Label>Motivo de Compra</Form.Label>
                             <Form.Control as="textarea" rows={2} value={motivo} onChange={e => setMotivo(e.target.value)} />
                         </Col>
                         <Col md={6}>
@@ -335,36 +381,35 @@ export default function ProjectModal({ show, handleClose, onSuccess, proyectoEdi
                     </Row>
 
                     <Row>
-                        {/* --- CAMBIO 4: DROPDOWN MÚLTIPLE PARA UBICACIÓN --- */}
-                        <Col md={12} className="mb-3">
-                            <Form.Label>Ubicación(es) *</Form.Label>
-                            <Dropdown autoClose="outside">
-                                {/* Usamos la clase custom para que parezca input */}
-                                <Dropdown.Toggle 
-                                    variant="" 
-                                    className="w-100 text-start d-flex justify-content-between align-items-center custom-dropdown-toggle bg-light"
-                                >
-                                    {ubicacionesIds.length === 0 
-                                        ? 'Seleccione Ubicaciones...' 
-                                        : `${ubicacionesIds.length} seleccionadas`}
-                                </Dropdown.Toggle>
+                        {!esKit && (
+                            <Col md={12} className="mb-3">
+                                <Form.Label>Ubicación(es) *</Form.Label>
+                                <Dropdown autoClose="outside">
+                                    <Dropdown.Toggle
+                                        variant=""
+                                        className="w-100 text-start d-flex justify-content-between align-items-center custom-dropdown-toggle bg-light"
+                                    >
+                                        {ubicacionesIds.length === 0
+                                            ? 'Seleccione Ubicaciones...'
+                                            : `${ubicacionesIds.length} seleccionadas`}
+                                    </Dropdown.Toggle>
 
-                                <Dropdown.Menu className="w-100 p-2" style={{ maxHeight: '200px', overflowY: 'auto' }}>
-                                    {listaUbicaciones.map(u => (
-                                        <Form.Check 
-                                            key={u.id}
-                                            type="checkbox"
-                                            id={`ubi-modal-${u.id}`} // ID único para no chocar con filtros
-                                            label={u.nombre}
-                                            checked={ubicacionesIds.includes(u.id.toString())}
-                                            onChange={() => toggleUbicacion(u.id.toString())}
-                                            className="mb-2"
-                                        />
-                                    ))}
-                                </Dropdown.Menu>
-                            </Dropdown>
-                        </Col>
-
+                                    <Dropdown.Menu className="w-100 p-2" style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                                        {listaUbicaciones.map(u => (
+                                            <Form.Check
+                                                key={u.id}
+                                                type="checkbox"
+                                                id={`ubi-modal-${u.id}`}
+                                                label={u.nombre}
+                                                checked={ubicacionesIds.includes(u.id.toString())}
+                                                onChange={() => toggleUbicacion(u.id.toString())}
+                                                className="mb-2"
+                                            />
+                                        ))}
+                                    </Dropdown.Menu>
+                                </Dropdown>
+                            </Col>
+                        )}
                         <Col md={12}>
                             <Form.Label className="fw-bold">Gestión de Imágenes</Form.Label>
                             {/* FOTOS EXISTENTES */}

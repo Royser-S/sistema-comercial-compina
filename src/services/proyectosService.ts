@@ -10,8 +10,16 @@ export const getProyectos = async (): Promise<Proyecto[]> => {
       ejecutiva:ejecutiva_id ( nombre_completo ),
       estado:estado_id ( nombre ),
       ubicacion:ubicacion_id ( nombre ),
-      tb_detalle_productos ( nombre_producto, cantidad ),
+    tb_detalle_productos ( 
+        nombre_producto, 
+        cantidad,
+        ubicacion_id, 
+        ubicacion:ubicacion_id ( nombre ) 
+      ),
       tb_galeria_proyectos ( id, imagen_url, nombre_archivo ) 
+
+
+
     `)
     .order('created_at', { ascending: false });
 
@@ -124,20 +132,22 @@ async function insertProductos(proyectoId: number, productos: any[]) {
   const productosAInsertar = productos.map(p => ({
     proyecto_id: proyectoId,
     nombre_producto: p.nombre,
-    cantidad: parseInt(p.cantidad)
+    cantidad: parseInt(p.cantidad),
+
+    ubicacion_id: p.ubicacionId ? parseInt(p.ubicacionId) : null
+
   }));
   if (productosAInsertar.length > 0) {
     await supabase.from('tb_detalle_productos').insert(productosAInsertar);
   }
 }
 
-// NUEVA FUNCIÓN: Mucho más simple, solo guarda texto.
 async function insertFotosCloudinary(proyectoId: number, urls: string[]) {
   if (urls.length > 0) {
     const fotosParaInsertar = urls.map(url => ({
       proyecto_id: proyectoId,
-      imagen_url: url,          // El link que nos dio Cloudinary
-      nombre_archivo: 'cloudinary_img' // Valor referencial
+      imagen_url: url,          
+      nombre_archivo: 'cloudinary_img' 
     }));
     
     await supabase.from('tb_galeria_proyectos').insert(fotosParaInsertar);

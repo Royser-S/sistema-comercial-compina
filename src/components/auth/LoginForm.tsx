@@ -1,4 +1,4 @@
-'use client'; // Este componente maneja interacción (clicks, inputs)
+'use client'; 
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -16,22 +16,22 @@ export default function LoginForm() {
 
 const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null); // Limpiamos errores previos
+    setError(null); 
     setLoading(true);
 
     try {
       const { rol } = await loginUser(email, password);
 
       if (!rol) {
-        throw new Error('No_Rol'); // Error interno nuestro
+        throw new Error('No_Rol'); 
       }
+
+      router.refresh();
 
       router.push('/proyectos'); 
 
     } catch (err: any) {
-      console.log("Error de login:", err.message); // Solo para ti en consola (F12)
-
-      // AQUI ESTÁ LA MAGIA: Traducimos el error feo de Supabase
+      console.log("Error de login:", err.message); 
       if (err.message.includes('Invalid login credentials')) {
         setError('❌ Correo o contraseña incorrectos.');
       } else if (err.message === 'No_Rol') {

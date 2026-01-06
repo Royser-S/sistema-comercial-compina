@@ -147,3 +147,39 @@ body.dark-mode .text-dark, body.dark-mode .text-secondary { color: var(--text-co
   transform: translateY(-2px);
   color: #fd7e14 !important; /* ¡NARANJA CORPORATIVO! */
 }
+
+
+
+.box-themed {
+  background-color: #f8f9fa; 
+  border: 1px solid #dee2e6;
+  color: #212529;
+}
+
+body.dark-mode .box-themed {
+  background-color: #2c2c2c !important; 
+  border: 1px solid #444444 !important;
+  color: #e0e0e0 !important;
+}
+
+body.dark-mode .box-themed .text-muted {
+  color: #adb5bd !important; 
+}
+
+/* Arreglo para bordes internos */
+body.dark-mode .border-bottom {
+    border-color: #444 !important;
+}
+
+
+
+
+.card-header, 
+.card-footer {
+    background-color: transparent !important;
+    border-color: var(--border-color) !important;
+}
+
+body.dark-mode .card-header {
+    color: var(--text-color);
+}
